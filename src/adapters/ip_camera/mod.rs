@@ -328,11 +328,10 @@ impl Adapter for IPCameraAdapter {
         }).collect()
     }
 
-    fn register_watch(&self,
-                      mut watch: Vec<(Id<Getter>, Option<Range>)>,
-                      _: Box<ExtSender<WatchEvent>>)
-                      -> ResultMap<Id<Getter>, Box<AdapterWatchGuard>, Error> {
-        watch.drain(..).map(|(id, _)| {
+    fn register_watch(&self, mut watch: Vec<(Id<Getter>, Option<Range>, Box<ExtSender<WatchEvent>>)>) ->
+            Vec<(Id<Getter>, Result<Box<AdapterWatchGuard>, Error>)>
+    {
+        watch.drain(..).map(|(id, _, _)| {
             (id.clone(), Err(Error::GetterDoesNotSupportWatching(id)))
         }).collect()
     }
