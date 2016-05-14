@@ -1,4 +1,5 @@
 use api::{ Error, User };
+use io::*;
 use services::*;
 use values::*;
 
@@ -86,21 +87,46 @@ pub trait AdapterManagerHandle: Send {
     fn remove_channel(& self, id: &Id<Channel>) -> Result<(), Error>;
 }
 
-pub enum WatchEvent {
+pub enum WatchEvent<V> {
     /// Fired when we enter the range specified when we started watching, or if no range was
     /// specified, fired whenever a new value is available.
     Enter {
         id: Id<Channel>,
-        value: Value
+        value: V
     },
 
     /// Fired when we exit the range specified when we started watching. If no range was
     /// specified, never fired.
     Exit {
         id: Id<Channel>,
-        value: Value
+        value: V
+    },
+
+    Error {
+        id: Id<Channel>,
+        error: Error
     }
 }
+
+
+pub trait RawAdapter: Send + Sync {
+    /// An id unique to this adapter. This id must persist between
+    /// reboots/reconnections.
+    fn id(&self) -> Id<AdapterId>;
+
+    fn fetch_values(&self, mut target: Vec<(Id<Channel>, Type)>, _: User) -> ResultMap<Id<Channel>, Option<(Payload, Type)>, Error>;
+    fn send_values(&self, values: HashMap<Id<Channel>, (Payload, Type)>, user: User) -> ResultMap<Id<Channel>, (), Error>;
+    fn register_watch(&self, Vec<RawWatchTarget>) -> WatchResult;
+
+    /// Signal the adapter that it is time to stop.
+    ///
+    /// Ideally, the adapter should not return until all its threads have been stopped.
+    fn stop(&self) {
+        // By default, do nothing.
+    }
+}
+
+
 
 /// API that adapters must implement.
 ///
@@ -145,8 +171,7 @@ pub trait Adapter: Send + Sync {
     ///
     /// If a `Range` option is set, the watcher expects to receive `EnterRange`/`ExitRange` events
     /// whenever the value available on the device enters/exits the range.
-    fn register_watch(&self, Vec<WatchTarget>) ->
-            WatchResult;
+    fn register_watch(&self, Vec<WatchTarget>) -> WatchResult;
 
     /// Signal the adapter that it is time to stop.
     ///
@@ -156,5 +181,7 @@ pub trait Adapter: Send + Sync {
     }
 }
 
-pub type WatchTarget = (Id<Channel>, Option<Value>, Box<ExtSender<WatchEvent>>);
+pub type RawWatchTarget = (Id<Channel>, /*condition*/Option<(Payload, Type)>, /*values*/Type, Box<ExtSender<WatchEvent</*result*/(Payload, Type)>>>);
+pub type WatchTarget = (Id<Channel>, /*condition*/Option<Value>, Box<ExtSender<WatchEvent</*result*/Value>>>);
+
 pub type WatchResult = Vec<(Id<Channel>, Result<Box<AdapterWatchGuard>, Error>)>;
