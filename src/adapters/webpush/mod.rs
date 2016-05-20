@@ -15,7 +15,7 @@
 mod crypto;
 mod db;
 
-use foxbox_taxonomy::api::{ Error, InternalError, User };
+use foxbox_taxonomy::api::{ Error, InternalError, Operation, User };
 use foxbox_taxonomy::manager::*;
 use foxbox_taxonomy::services::*;
 use foxbox_taxonomy::values::{ Type, TypeError, Value, Json, WebPushNotify };
@@ -301,7 +301,7 @@ impl<C: Controller> Adapter for WebPush<C> {
     fn register_watch(&self, mut watch: Vec<WatchTarget>) -> WatchResult
     {
         watch.drain(..).map(|(id, _, _)| {
-            (id.clone(), Err(Error::GetterDoesNotSupportWatching(id)))
+            (id.clone(), Err(Error::OperationNotSupported(Operation::Watch, id)))
         }).collect()
     }
 }
