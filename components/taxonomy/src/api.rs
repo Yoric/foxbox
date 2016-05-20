@@ -206,7 +206,7 @@ fn test_user_partialeq() {
     assert_eq!(User::Id(1), User::Id(1));
 }
 
-impl<K> Parser<Targetted<K, Value>> for Targetted<K, Value> where K: Parser<K> + Clone {
+impl<K> Parser<Targetted<K, Payload>> for Targetted<K, Payload> where K: Parser<K> + Clone {
     fn description() -> String {
         format!("Targetted<{}, Value>", K::description())
     }
@@ -214,7 +214,7 @@ impl<K> Parser<Targetted<K, Value>> for Targetted<K, Value> where K: Parser<K> +
         if source.is_object() {
             // Default format: an object {select, value}.
             let select = try!(path.push("select", |path| Vec::<K>::take(path, source, "select")));
-            let payload = try!(path.push("value", |path| Value::take(path, source, "value")));
+            let payload = try!(path.push("value", |path| Payload::take(path, source, "value")));
             Ok(Targetted {
                 select: select,
                 payload: payload
@@ -225,7 +225,7 @@ impl<K> Parser<Targetted<K, Value>> for Targetted<K, Value> where K: Parser<K> +
                 return Err(ParseError::type_error(&Self::description() as &str, &path, "an array of length 2"))
             }
             let select = try!(path.push_index(0, |path| Vec::<K>::parse(path, &array[0])));
-            let payload = try!(path.push_index(1, |path| Value::parse(path, &array[1])));
+            let payload = try!(path.push_index(1, |path| Payload::parse(path, &array[1])));
             Ok(Targetted {
                 select: select,
                 payload: payload
@@ -236,9 +236,9 @@ impl<K> Parser<Targetted<K, Value>> for Targetted<K, Value> where K: Parser<K> +
     }
 }
 
-impl<K> Parser<Targetted<K, Exactly<Value>>> for Targetted<K, Exactly<Value>> where K: Parser<K> + Clone {
+impl<K> Parser<Targetted<K, Exactly<(Payload, Type)>>> for Targetted<K, Exactly<(Payload, Type)>> where K: Parser<K> + Clone {
     fn description() -> String {
-        format!("Targetted<{}, Value>", K::description())
+        format!("Targetted<{}, range>", K::description())
     }
     fn parse(path: Path, source: &JSON) -> Result<Self, ParseError> {
         let select = try!(path.push("select", |path| Vec::<K>::take(path, source, "select")));
@@ -250,13 +250,15 @@ impl<K> Parser<Targetted<K, Exactly<Value>>> for Targetted<K, Exactly<Value>> wh
                 })
             }
         }
-        let payload = match path.push("range", |path| Exactly::<Value>::take_opt(path, source, "range")) {
-            Some(result) => try!(result),
-            None => Exactly::Always
+        let result = match path.push("range", |path| Exactly::<Payload>::take_opt(path, source, "range")) {
+            Some(Ok(Exactly::Exactly(payload))) => Exactly::Exactly((payload, Type::Range)),
+            Some(Ok(Exactly::Always)) | None => Exactly::Always,
+            Some(Ok(Exactly::Never)) => Exactly::Never,
+            Some(Err(err)) => return Err(err),
         };
         Ok(Targetted {
             select: select,
-            payload: payload
+            payload: result
         })
     }
 }

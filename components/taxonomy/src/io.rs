@@ -42,6 +42,18 @@ impl Payload {
     }
 }
 
+impl ToJSON for Payload {
+    fn to_json(&self) -> JSON {
+        self.json.clone()
+    }
+}
+
+impl ToJSON for (Payload, Type) {
+    fn to_json(&self) -> JSON {
+        self.0.to_json()
+    }
+}
+
 impl Parser<Payload> for Payload {
     fn description() -> String {
         "JSON".to_owned()
