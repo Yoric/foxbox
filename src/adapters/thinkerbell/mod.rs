@@ -1,6 +1,6 @@
 //! An adapter providing access to the Thinkerbell rules engine.
 
-use foxbox_taxonomy::api::{ Error, InternalError, Operation, User };
+use foxbox_taxonomy::api::{ Error, InternalError, User };
 use foxbox_taxonomy::manager::*;
 use foxbox_taxonomy::services::{ AdapterId, ServiceId, Service, Channel, ChannelKind };
 use foxbox_taxonomy::util::Id;
@@ -132,13 +132,6 @@ impl Adapter for ThinkerbellAdapter {
                 }
             })
             .collect()
-    }
-
-    fn register_watch(&self, mut watch: Vec<WatchTarget>) -> WatchResult
-    {
-        watch.drain(..).map(|(id, _, _)| {
-            (id.clone(), Err(Error::OperationNotSupported(Operation::Watch, id)))
-        }).collect()
     }
 }
 

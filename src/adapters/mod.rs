@@ -9,7 +9,6 @@ pub mod clock;
 pub mod console;
 
 /// A Text To Speak adapter
-#[cfg(target_os = "linux")]
 pub mod tts;
 
 /// An adapter providing access to IP cameras.

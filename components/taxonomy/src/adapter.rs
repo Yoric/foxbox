@@ -1,4 +1,4 @@
-use api::{ Error, User };
+use api::{ Error, Operation, User };
 use io::*;
 use services::*;
 use values::*;
@@ -114,9 +114,21 @@ pub trait RawAdapter: Send + Sync {
     /// reboots/reconnections.
     fn id(&self) -> Id<AdapterId>;
 
-    fn fetch_values(&self, mut target: Vec<(Id<Channel>, Type)>, _: User) -> ResultMap<Id<Channel>, Option<(Payload, Type)>, Error>;
-    fn send_values(&self, values: HashMap<Id<Channel>, (Payload, Type)>, user: User) -> ResultMap<Id<Channel>, (), Error>;
-    fn register_watch(&self, Vec<RawWatchTarget>) -> WatchResult;
+    fn fetch_values(&self, mut target: Vec<(Id<Channel>, Type)>, _: User) -> ResultMap<Id<Channel>, Option<(Payload, Type)>, Error> {
+        target.drain(..).map(|(id, _)| {
+            (id.clone(), Err(Error::OperationNotSupported(Operation::Watch, id)))
+        }).collect()
+    }
+    fn send_values(&self, mut values: HashMap<Id<Channel>, (Payload, Type)>, _: User) -> ResultMap<Id<Channel>, (), Error> {
+        values.drain().map(|(id, _)| {
+            (id.clone(), Err(Error::OperationNotSupported(Operation::Watch, id)))
+        }).collect()
+    }
+    fn register_watch(&self, mut target: Vec<RawWatchTarget>) -> WatchResult {
+        target.drain(..).map(|(id, _, _, _)| {
+            (id.clone(), Err(Error::OperationNotSupported(Operation::Watch, id)))
+        }).collect()
+    }
 
     /// Signal the adapter that it is time to stop.
     ///
@@ -154,13 +166,23 @@ pub trait Adapter: Send + Sync {
     /// expects the adapter to attempt to minimize the connections with the actual devices.
     ///
     /// The AdapterManager is in charge of keeping track of the age of values.
-    fn fetch_values(&self, mut target: Vec<Id<Channel>>, _: User) -> ResultMap<Id<Channel>, Option<Value>, Error>;
+    fn fetch_values(&self, mut target: Vec<Id<Channel>>, _: User) -> ResultMap<Id<Channel>, Option<Value>, Error>
+    {
+        target.drain(..).map(|id| {
+            (id.clone(), Err(Error::OperationNotSupported(Operation::Watch, id)))
+        }).collect()
+    }
 
     /// Request that values be sent to channels.
     ///
     /// The AdapterManager always attempts to group calls to `send_values` by `Adapter`, and then
     /// expects the adapter to attempt to minimize the connections with the actual devices.
-    fn send_values(&self, values: HashMap<Id<Channel>, Value>, user: User) -> ResultMap<Id<Channel>, (), Error>;
+    fn send_values(&self, mut op: HashMap<Id<Channel>, Value>, _: User) -> ResultMap<Id<Channel>, (), Error>
+    {
+        op.drain().map(|(id, _)| {
+            (id.clone(), Err(Error::OperationNotSupported(Operation::Watch, id)))
+        }).collect()
+    }
 
     /// Watch a bunch of getters as they change.
     ///
@@ -171,7 +193,12 @@ pub trait Adapter: Send + Sync {
     ///
     /// If a `Range` option is set, the watcher expects to receive `EnterRange`/`ExitRange` events
     /// whenever the value available on the device enters/exits the range.
-    fn register_watch(&self, Vec<WatchTarget>) -> WatchResult;
+    fn register_watch(&self, mut watch: Vec<WatchTarget>) -> WatchResult
+    {
+        watch.drain(..).map(|(id, _, _)| {
+            (id.clone(), Err(Error::OperationNotSupported(Operation::Watch, id)))
+        }).collect()
+    }
 
     /// Signal the adapter that it is time to stop.
     ///

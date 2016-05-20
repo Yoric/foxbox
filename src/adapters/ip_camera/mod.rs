@@ -12,7 +12,7 @@ mod api;
 mod upnp_listener;
 
 use config_store::ConfigService;
-use foxbox_taxonomy::api::{Error, InternalError, Operation, User};
+use foxbox_taxonomy::api::{Error, InternalError, User};
 use foxbox_taxonomy::manager::*;
 use foxbox_taxonomy::selector::*;
 use foxbox_taxonomy::services::*;
@@ -283,13 +283,6 @@ impl Adapter for IPCameraAdapter {
             }
 
             (id.clone(), Err(Error::InternalError(InternalError::NoSuchChannel(id))))
-        }).collect()
-    }
-
-    fn register_watch(&self, mut watch: Vec<WatchTarget>) -> WatchResult
-    {
-        watch.drain(..).map(|(id, _, _)| {
-            (id.clone(), Err(Error::OperationNotSupported(Operation::Watch, id)))
         }).collect()
     }
 }
