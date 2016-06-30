@@ -1,0 +1,12 @@
+[package]
+name = "sentry"
+version = "0.1.0"
+authors = ["David Rajchenbach-Teller <dteller@mozilla.com>"]
+license = "MPL2"
+
+[dependencies]
+foxbox_taxonomy = { path = "../taxonomy/" }
+gstreamer = "0.4"
+lazy_static = "^0.1"
+log = "0.3"
+transformable_channels = "*"

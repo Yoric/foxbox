@@ -46,6 +46,8 @@ impl UpnpListener for IpCameraUpnpListener {
         }
 
         let model_name = try_get!(service.description, "/root/device/modelName");
+        info!("[upnp] Detected service {} on {}", model_name, try_get!(service.description, "/root/device/presentationURL"));
+
         let known_models = ["DCS-5010L", "DCS-5020L", "DCS-5025L", "Link-IpCamera"];
         let model_name_str: &str = model_name;
         if !known_models.contains(&model_name_str) {
