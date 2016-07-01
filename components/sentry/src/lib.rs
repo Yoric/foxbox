@@ -6,9 +6,7 @@
 
 
 extern crate foxbox_taxonomy as taxonomy;
-extern crate transformable_channels;
 
-extern crate gst;
 #[macro_use]
 extern crate lazy_static;
 #[macro_use]
@@ -38,6 +36,7 @@ impl Html5Video {
     }
 
     /// Launch gstreamer in its own process, using `gst-launch`.
+    // FIXME: Bring this in-process?
     pub fn start(&self, port: u32) -> Result<(), ()> {
         {
             if let Some(_) = *self.process.lock().unwrap() {
@@ -128,6 +127,22 @@ pub struct Adapter {
     /// `knilxof.org` if the user is on a remote network. This channel will most
     /// likely be reserved for `debug` builds.
     id_channel_fetch_html5_stream: Id<Channel>,
+
+
+    // A channel used to start/stop recording of the webcam to disk (TBD)
+    //
+    // Recording takes place on some kind of circular buffer, by splitting
+    // the movie in 2-minute increments and erasing the oldest once we use
+    // more than X bytes.
+    // id_channel_control_recording: Id<Channel>,
+
+    // A channel used to replay records.
+    //
+    // By default, records are replayed seamlessly from the start of the
+    // circular buffer.
+    //
+    // For a first version, this channel returns a `Html5Video`.
+    // id_channel_replay_records_html5_stream: Id<Channel>
 }
 
 static VERSION : [u32;4] = [0, 1, 0, 0];
@@ -175,15 +190,6 @@ impl Adapter {
             ..Channel::default()
         };
         try!(manager.add_channel(channel_live_stream_html5));
-
         Ok(())
-    }
-
-
-    pub fn start() {
-        gst::init(); // FIXME: Lazify?
-    }
-
-    pub fn stop() {
     }
 }

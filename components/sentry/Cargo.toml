@@ -6,7 +6,5 @@ license = "MPL2"
 
 [dependencies]
 foxbox_taxonomy = { path = "../taxonomy/" }
-gstreamer = "0.4"
 lazy_static = "^0.1"
 log = "0.3"
-transformable_channels = "*"

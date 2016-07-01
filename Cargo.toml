@@ -27,6 +27,7 @@ foxbox_core = { path = "components/core/" }
 foxbox_thinkerbell = { path = "components/thinkerbell/" }
 foxbox_taxonomy = { path = "components/taxonomy/" }
 openzwave-adapter = { path = "components/openzwave-adapter/", optional = true }
+sentry = { path = "components/sentry" }
 tls = { path = "components/tls/" }
 
 foxbox_users = { git = "https://github.com/fxbox/users.git", rev = "ec53c3a" }

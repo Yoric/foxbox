@@ -24,6 +24,8 @@ mod thinkerbell;
 /// An adapter providing `WebPush` services.
 pub mod webpush;
 
+use sentry;
+
 use foxbox_taxonomy::manager::AdapterManager as TaxoManager;
 
 use self::thinkerbell::ThinkerbellAdapter;
@@ -77,6 +79,8 @@ impl<T: Controller> AdapterManager<T> {
         clock::Clock::init(manager).unwrap(); // FIXME: We should have a way to report errors
         webpush::WebPush::init(c, manager).unwrap();
         ip_camera::IPCameraAdapter::init(manager, self.controller.clone()).unwrap();
+        sentry::Adapter::init(manager).unwrap();
+
         let scripts_path = &self.controller.get_profile().path_for("thinkerbell_scripts.sqlite");
         ThinkerbellAdapter::init(manager, scripts_path).unwrap(); // FIXME: no unwrap!
 
