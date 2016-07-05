@@ -15,7 +15,7 @@ extern crate log;
 use taxonomy::channel::*;
 use taxonomy::io::*;
 use taxonomy::parse::*;
-use taxonomy::services::{ AdapterId };
+use taxonomy::services::{ AdapterId, Service };
 use taxonomy::util::{ Id, Maybe };
 use taxonomy::values::*;
 use taxonomy::api::{ Operation, Error, InternalError, User };
@@ -181,6 +181,10 @@ impl Adapter {
 
         let adapter_id = adapter.id();
         let service_id = Id::new("service@foxlink.mozilla.org/livestream/html5");
+
+        let service = Service::empty(&service_id, &adapter_id);
+        try!(manager.add_service(service));
+
         let channel_live_stream_html5 = Channel {
             id: id_channel_fetch_html5_stream,
             adapter: adapter_id,
