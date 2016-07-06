@@ -34,6 +34,7 @@ extern crate foxbox_core;
 extern crate foxbox_taxonomy;
 extern crate foxbox_thinkerbell;
 extern crate foxbox_users;
+extern crate sentry;
 #[macro_use]
 extern crate hyper;
 #[macro_use]
