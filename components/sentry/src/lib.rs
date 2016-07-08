@@ -30,6 +30,13 @@ use std::sync::{ Arc, Mutex };
 use std::sync::mpsc::channel;
 use std::thread;
 
+/// Ensure that GStreamer is initialized.
+///
+/// This function is idempotent.
+fn gst_init() {
+    *GST_INITIALIZED;
+}
+
 struct Html5Video {
     port: u16,
 }
@@ -38,6 +45,8 @@ impl Html5Video {
 
     // FIXME: For the time being, we have no way of closing the stream when there are no clients.
     fn new() -> Result<Html5Video, Error> {
+        gst_init();
+
         // Capture the built-in cam. This requires gstreamer-plugins-bad. There may be a
         // better solution.
         // FIXME: This works on Mac. We'll need to adapt to other platforms.
@@ -54,9 +63,6 @@ impl Html5Video {
         let spec_stream = "tcpserversink host=127.0.0.1 port=0 name=server";
 
         let spec = format!("{} ! {} ! {} ! {}", spec_capture, spec_decode, spec_reencode, spec_stream);
-
-        // FIXME: We probably don't need to call gst::init() all the time.
-        gst::init();
 
         info!("[sentry] Preparing pipeline {}", spec);
         let mut pipeline = gst::Pipeline::new_from_str(&spec).unwrap();
@@ -140,6 +146,7 @@ impl fmt::Debug for Html5Video {
 
 lazy_static! {
     static ref HTML5_VIDEO: Arc<Format> = Arc::new(Format::new::<Html5Video>());
+    static ref GST_INITIALIZED: () = gst::init();
 }
 
 
