@@ -77,9 +77,9 @@ impl<T: Controller> AdapterManager<T> {
         console::Console::init(manager).unwrap(); // FIXME: We should have a way to report errors
         philips_hue::PhilipsHueAdapter::init(manager, c.clone()).unwrap();
         clock::Clock::init(manager).unwrap(); // FIXME: We should have a way to report errors
-        webpush::WebPush::init(c, manager).unwrap();
+        webpush::WebPush::init(c.clone(), manager).unwrap();
         ip_camera::IPCameraAdapter::init(manager, self.controller.clone()).unwrap();
-        sentry::Adapter::init(manager).unwrap();
+        sentry::Adapter::init(manager, &c).unwrap();
 
         let scripts_path = &self.controller.get_profile().path_for("thinkerbell_scripts.sqlite");
         ThinkerbellAdapter::init(manager, scripts_path).unwrap(); // FIXME: no unwrap!
