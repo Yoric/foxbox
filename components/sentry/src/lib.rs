@@ -33,10 +33,11 @@ use std::thread;
 /// Ensure that GStreamer is initialized.
 ///
 /// This function is idempotent.
-fn gst_init() {
+fn gst_ensure_initialized() {
     *GST_INITIALIZED;
 }
 
+#[derive(Clone)]
 struct Html5Video {
     port: u16,
 }
@@ -44,8 +45,9 @@ impl Html5Video {
     /// Start a stream, immediately.
 
     // FIXME: For the time being, we have no way of closing the stream when there are no clients.
+    // FIXME: To implement this, we may need some kind of watchdog based e.g. on polling netstat.
     fn new() -> Result<Html5Video, Error> {
-        gst_init();
+        gst_ensure_initialized();
 
         // Capture the built-in cam. This requires gstreamer-plugins-bad. There may be a
         // better solution.
@@ -159,7 +161,7 @@ pub struct Adapter {
     /// `knilxof.org` if the user is on a remote network. This channel will most
     /// likely be reserved for `debug` builds.
     id_channel_fetch_html5_stream: Id<Channel>,
-
+    livestreamer: Mutex<Option<Html5Video>>,
 
     // A channel used to start/stop recording of the webcam to disk (TBD)
     //
@@ -197,8 +199,15 @@ impl AdapterT for Adapter {
     {
         target.drain(..).map(|id| {
             if id == self.id_channel_fetch_html5_stream {
+                let mut lock = self.livestreamer.lock().unwrap();
+                if let Some(ref video) = *lock {
+                    return (id, Ok(Some(Value::new((*video).clone()))))
+                }
                 match Html5Video::new() {
-                    Ok(video) => (id, Ok(Some(Value::new(video)))),
+                    Ok(video) => {
+                        *lock = Some(video.clone());
+                        (id, Ok(Some(Value::new(video))))
+                    },
                     Err(err) => (id, Err(err))
                 }
             } else if id == self.id_channel_control_recording {
@@ -271,8 +280,9 @@ impl Adapter {
         let id_channel_control_recording = Id::new("sentry@foxlink.mozilla.org/record/ogg");
         let adapter = Arc::new(Adapter {
             id_channel_fetch_html5_stream: id_channel_fetch_html5_stream.clone(),
+            livestreamer: Mutex::new(None),
             id_channel_control_recording: id_channel_control_recording.clone(),
-            recorder: Mutex::new(None)
+            recorder: Mutex::new(None),
         });
         try!(manager.add_adapter(adapter.clone()));
 
